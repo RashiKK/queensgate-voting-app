@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voting Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="brand">
+        <img src="{{ url_for('static', filename='logo.jpeg') }}" class="logo">
+        <h2>Queensgate Capital</h2>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1>Election Results</h1>
+    <p class="badge">{{ topic.title }}</p>
+
+    {% set total_votes = results | sum(attribute='vote_count') %}
+
+    <div style="margin-top: 20px;">
+        <p class="badge">Total Votes Cast: {{ total_votes }}</p>
+    </div>
+
+    {% if winner %}
+        <div style="
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 15px;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        ">
+            <h2 style="margin:0; color:#22c55e;">🏆 Winner</h2>
+            <p style="font-size:18px; font-weight:700; margin-top:10px;">
+                {{ winner }}
+            </p>
+        </div>
+    {% endif %}
+
+    <hr style="margin: 25px 0; border: 1px solid rgba(255,255,255,0.1);">
+
+    {% if results|length == 0 %}
+        <p style="color: rgba(255,255,255,0.75);">
+            No votes submitted yet.
+        </p>
+    {% else %}
+
+        <h2>Vote Breakdown</h2>
+
+        {% for row in results %}
+            {% set percent = (row.vote_count / total_votes * 100) if total_votes > 0 else 0 %}
+
+            <div style="margin-bottom: 18px;">
+
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-weight:600;">{{ row.candidate_name }}</span>
+                    <span class="badge">{{ row.vote_count }} votes ({{ "%.1f"|format(percent) }}%)</span>
+                </div>
+
+                <div style="
+                    width: 100%;
+                    height: 14px;
+                    background: rgba(255,255,255,0.08);
+                    border-radius: 10px;
+                    margin-top: 6px;
+                    overflow: hidden;
+                ">
+                    <div style="
+                        width: {{ percent }}%;
+                        height: 100%;
+                        background: linear-gradient(90deg, #38bdf8, #6366f1);
+                        border-radius: 10px;
+                    "></div>
+                </div>
+
+            </div>
+        {% endfor %}
+
+    {% endif %}
+
+    <div class="footer-links">
+        <a href="/">⬅ Back to Dashboard</a>
+        <a href="/admin_dashboard">⚙ Admin Panel</a>
+    </div>
+
+</div>
+
+</body>
+</html>
