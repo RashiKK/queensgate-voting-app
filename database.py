@@ -3,26 +3,31 @@ import sqlite3
 DB_NAME = "voting.db"
 
 
+# ================= CONNECT =================
 def connect_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
 
+# ================= INIT DB =================
 def init_db():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # voters table now includes secret_code
+    # ================= USERS (VOTERS) =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS voters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
         voting_power INTEGER NOT NULL,
-        secret_code TEXT NOT NULL
+        password TEXT NOT NULL,
+        must_change_password INTEGER DEFAULT 1
     )
     """)
 
+    # ================= TOPICS =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS topics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,48 +36,50 @@ def init_db():
     )
     """)
 
+    # ================= VOTES =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS votes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         topic_id INTEGER NOT NULL,
         candidate_name TEXT NOT NULL,
-        vote_count INTEGER DEFAULT 0,
-        FOREIGN KEY(topic_id) REFERENCES topics(id)
+        vote_count INTEGER DEFAULT 0
     )
     """)
 
+    # ================= VOTER USAGE =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS voter_usage (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         topic_id INTEGER NOT NULL,
-        voter_name TEXT NOT NULL,
-        votes_used INTEGER DEFAULT 0,
-        FOREIGN KEY(topic_id) REFERENCES topics(id)
+        voter_email TEXT NOT NULL,
+        votes_used INTEGER DEFAULT 0
     )
     """)
 
     conn.commit()
 
-    # Hardcoded voters + secret codes
+    # ================= DEFAULT USERS =================
+    # IMPORTANT:
+    # password = temporary password (first login)
     voters = [
-        ("Mohammad Wasim", 2, "WSM2026"),
-        ("Atiqur Rahman", 3, "ATQ2026"),
-        ("Sazzadul Mitu", 2, "MITU2026"),
-        ("Naihan Ahmed", 2, "NAIH2026"),
-        ("Robin Raquibul Kamal", 2, "RBK2026"),
-        ("Mohammad Sohel Solaiman", 2, "SOHEL2026"),
-        ("Gazi Salah Uddin", 2, "GAZI2026"),
-        ("Md Minhaz Chowdhury", 1, "MINHAZ2026"),
-        ("Zahid Islam", 2, "ZAHID2026"),
-        ("Muhammad M Islam", 2, "ISLAM2026")
-    ]
+    ("Atiqur Rahman", "atiq1512rahman@yahoo.com", 3, "ATQ2026"),
+    ("Mohammad Wasim", "md_wasim03@yahoo.com", 2, "WSM2026"),
+    ("Sazzadul Mitu", "Mitu.rc@gmail.com", 2, "MITU2026"),
+    ("Naihan Ahmed", "naihanahmed@msn.com", 2, "NAIH2026"),
+    ("Robin Kamal", "robinrkamal@gmail.com", 2, "RBK2026"),
+    ("Sohel Solaiman", "sohel.solaiman@gmail.com", 2, "SOHEL2026"),
+    ("Gazi Salah Uddin", "Shumon905@gmail.com", 2, "GAZI2026"),
+    ("Minhaz Chowdhury", "minhazc@gmail.com", 1, "MINHAZ2026"),
+    ("Zahid Islam", "sajib27@yahoo.com", 2, "ZAHID2026"),
+    ("Muhammad M Islam", "fsmi1255@gmail.com", 2, "ISLAM2026")
+]
 
-    # Insert voters if missing
-    for name, power, code in voters:
+    for name, email, power, pwd in voters:
         cursor.execute("""
-            INSERT OR IGNORE INTO voters (name, voting_power, secret_code)
-            VALUES (?, ?, ?)
-        """, (name, power, code))
+        INSERT OR IGNORE INTO voters
+        (name, email, voting_power, password, must_change_password)
+        VALUES (?, ?, ?, ?, 1)
+        """, (name, email, power, pwd))
 
     conn.commit()
     conn.close()

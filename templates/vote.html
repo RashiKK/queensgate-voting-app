@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vote</title>
+    <title>Vote Panel</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -17,46 +17,48 @@
 <div class="container">
 
     <h1>Voting Panel</h1>
+
     <p class="badge">{{ topic.title }}</p>
 
-    <p style="margin-top: 15px; font-size: 15px;">
-        Logged in as: <b style="color:#38bdf8;">{{ voter_name }}</b>
+    <p style="margin-top: 15px;">
+        Logged in as: <b style="color:#38bdf8;">{{ voter_email }}</b>
     </p>
 
-    <p class="badge" style="margin-top:10px;">
+    <p class="badge">
         Remaining Votes: {{ remaining_votes }} / {{ voting_power }}
     </p>
 
     <hr style="margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
 
-    <h2>Submit Your Vote</h2>
+    <h2>Cast Your Vote</h2>
 
     <form method="POST">
 
-        <label>Vote For:</label>
+        <label>Select Candidate</label>
         <select name="candidate_name" required>
+
             {% for voter in candidates %}
-            <option value="{{ voter['name'] }}">
-                {{ voter['name'] }}
-            </option>
+                <option value="{{ voter['name'] }}">
+                    {{ voter['name'] }}
+                </option>
             {% endfor %}
+
         </select>
 
         <br><br>
+
         <button type="submit">Submit Vote</button>
+
     </form>
 
     <hr style="margin: 25px 0; border: 1px solid rgba(255,255,255,0.1);">
 
-    <h2>Voting Power Status</h2>
+    <h2>All Candidates</h2>
 
     <ul>
         {% for voter in candidates %}
         <li>
-            <span>{{ voter['name'] }}</span>
-            <span class="badge">
-                {{ voter['voting_power'] }}
-            </span>
+            {{ voter['name'] }}
         </li>
         {% endfor %}
     </ul>

@@ -15,39 +15,43 @@
 </div>
 
 <div class="container">
+
     <h1>Voter Login</h1>
 
-    <p style="color: rgba(255,255,255,0.75); font-size: 14px;">
-        Select your name and enter your secret code to login.
+    <p style="color: rgba(255,255,255,0.7); font-size: 14px;">
+        Login using your email and temporary password.
     </p>
 
     {% if error %}
         <p style="color: red; font-weight: bold;">{{ error }}</p>
     {% endif %}
 
-    <hr style="margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
-
     <form method="POST">
-        <label>Select Your Name</label>
-        <select name="voter_name" required>
+
+        <label>Email</label>
+        <select name="email" required>
             {% for voter in voters %}
-                <option value="{{ voter.name }}">{{ voter.name }}</option>
+                <option value="{{ voter.email }}">
+                    {{ voter.email }}
+                </option>
             {% endfor %}
         </select>
 
         <br><br>
 
-        <label>Secret Code</label>
-        <input type="password" name="secret_code" placeholder="Enter your secret code..." required>
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password..." required>
 
         <br><br>
 
-        <button type="submit">🔐 Login</button>
+        <button type="submit">Login</button>
+
     </form>
 
     <div class="footer-links">
         <a href="/">⬅ Back to Dashboard</a>
     </div>
+
 </div>
 
 </body>

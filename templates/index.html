@@ -23,7 +23,7 @@
         {% endif %}
 
         {% if voter_logged_in %}
-            <p class="badge">Voter Logged In: {{ voter_name }}</p>
+    <p class="badge">Voter Logged In: {{ voter_email }}</p>
         {% endif %}
 
         {% if not admin_logged_in and not voter_logged_in %}
