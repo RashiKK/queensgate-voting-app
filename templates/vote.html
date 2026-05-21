@@ -18,54 +18,90 @@
 
     <h1>Voting Panel</h1>
 
-    <p class="badge">{{ topic.title }}</p>
+    <p class="badge">
+        {{ topic.title }}
+    </p>
 
-    <p style="margin-top: 15px;">
-        Logged in as: <b style="color:#38bdf8;">{{ voter_email }}</b>
+    <p style="margin-top:15px;">
+        Logged in as:
+        <b style="color:#38bdf8;">
+            {{ voter_email }}
+        </b>
     </p>
 
     <p class="badge">
-        Remaining Votes: {{ remaining_votes }} / {{ voting_power }}
+        Your Voting Power:
+        {{ voting_power }}
     </p>
 
-    <hr style="margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+    <hr style="margin:20px 0; border:1px solid rgba(255,255,255,0.1);">
 
-    <h2>Cast Your Vote</h2>
+    {% if has_voted == 1 %}
 
-    <form method="POST">
+    <h2 style="color:#22c55e;">
+        ✅ You already voted.
+    </h2>
 
-        <label>Select Candidate</label>
-        <select name="candidate_name" required>
+    <br>
 
-            {% for voter in candidates %}
-                <option value="{{ voter['name'] }}">
-                    {{ voter['name'] }}
-                </option>
-            {% endfor %}
+    <a href="/"
+       style="
+       display:inline-block;
+       padding:10px 18px;
+       background:#38bdf8;
+       color:white;
+       border-radius:10px;
+       text-decoration:none;
+       font-weight:600;
+       ">
+       ⬅ Back to Dashboard
+    </a>
 
-        </select>
+{% else %}
 
-        <br><br>
+        <h2>Cast Your Vote</h2>
 
-        <button type="submit">Submit Vote</button>
+        <form method="POST">
 
-    </form>
+            <label>Select Candidate</label>
 
-    <hr style="margin: 25px 0; border: 1px solid rgba(255,255,255,0.1);">
+            <select name="candidate_name" required>
 
-    <h2>All Candidates</h2>
+                {% for candidate in candidates %}
+
+                    <option value="{{ candidate['name'] }}">
+                        {{ candidate['name'] }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+            <br><br>
+
+            <button type="submit">
+                Submit Vote
+            </button>
+
+        </form>
+
+    {% endif %}
+
+    <hr style="margin:25px 0; border:1px solid rgba(255,255,255,0.1);">
+
+    <h2>Candidates</h2>
 
     <ul>
-        {% for voter in candidates %}
-        <li>
-            {{ voter['name'] }}
-        </li>
-        {% endfor %}
-    </ul>
 
-    <div class="footer-links">
-        <a href="/">⬅ Back to Dashboard</a>
-    </div>
+        {% for candidate in candidates %}
+
+            <li>
+                {{ candidate['name'] }}
+            </li>
+
+        {% endfor %}
+
+    </ul>
 
 </div>
 

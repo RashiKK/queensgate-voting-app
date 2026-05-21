@@ -125,17 +125,44 @@ def create_topic():
     if not session.get("admin_logged_in"):
         return "❌ Access denied"
 
+    conn = connect_db()
+
+    voters = conn.execute("""
+        SELECT * FROM voters
+        ORDER BY name
+    """).fetchall()
+
     if request.method == "POST":
         title = request.form["title"]
 
-        conn = connect_db()
-        conn.execute("INSERT INTO topics (title, is_active) VALUES (?, 1)", (title,))
+        selected_voters = request.form.getlist("allowed_voters")
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO topics (title, is_active) VALUES (?, 1)",
+            (title,)
+        )
+
+        topic_id = cursor.lastrowid
+
+        for voter_email in selected_voters:
+            cursor.execute("""
+                INSERT INTO topic_voters (topic_id, voter_email)
+                VALUES (?, ?)
+            """, (topic_id, voter_email))
+
         conn.commit()
         conn.close()
 
         return redirect(url_for("home"))
 
-    return render_template("create_topic.html")
+    conn.close()
+
+    return render_template(
+        "create_topic.html",
+        voters=voters
+    )
 
 
 # ================= DELETE TOPIC =================
@@ -185,67 +212,95 @@ def open_topic(topic_id):
 # ================= VOTE =================
 @app.route("/vote/<int:topic_id>", methods=["GET", "POST"])
 def vote(topic_id):
+
     if not session.get("voter_logged_in"):
         return redirect(url_for("voter_login"))
 
     email = session["voter_email"]
+
     conn = connect_db()
 
-    topic = conn.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone()
+    topic = conn.execute("""
+        SELECT * FROM topics
+        WHERE id=?
+    """, (topic_id,)).fetchone()
 
     if not topic:
-        return "Topic not found"
+        conn.close()
+        return "❌ Topic not found"
 
     if topic["is_active"] == 0:
-        return "Voting closed"
+        conn.close()
+        return "❌ Voting closed"
 
-    voter = conn.execute("SELECT * FROM voters WHERE email=?", (email,)).fetchone()
+    # ================= CHECK ALLOWED =================
+    allowed = conn.execute("""
+        SELECT * FROM topic_voters
+        WHERE topic_id=? AND voter_email=?
+    """, (topic_id, email)).fetchone()
 
-    usage = conn.execute(
-        "SELECT * FROM voter_usage WHERE topic_id=? AND voter_email=?",
-        (topic_id, email)
-    ).fetchone()
+    if not allowed:
+        conn.close()
+        return "❌ You are not allowed to vote in this topic."
 
-    if not usage:
-        votes_used = 0
-        conn.execute(
-            "INSERT INTO voter_usage (topic_id, voter_email, votes_used) VALUES (?, ?, 0)",
-            (topic_id, email)
-        )
-        conn.commit()
-    else:
-        votes_used = usage["votes_used"]
+    # ================= GET VOTER =================
+    voter = conn.execute("""
+        SELECT * FROM voters
+        WHERE email=?
+    """, (email,)).fetchone()
 
-    remaining_votes = voter["voting_power"] - votes_used
+    # ================= CHECK ALREADY VOTED =================
+    usage = conn.execute("""
+        SELECT * FROM voter_usage
+        WHERE topic_id=? AND voter_email=?
+    """, (topic_id, email)).fetchone()
 
-    candidates = conn.execute("SELECT name FROM voters").fetchall()
+    has_voted = 0
 
+    if usage:
+        has_voted = usage["has_voted"]
+
+    # ================= CANDIDATES =================
+    candidates = conn.execute("""
+        SELECT name FROM voters
+        ORDER BY name
+    """).fetchall()
+
+    # ================= SUBMIT =================
     if request.method == "POST":
-        if remaining_votes <= 0:
-            return "No votes left"
+
+        if has_voted == 1:
+            conn.close()
+            return "❌ You already voted."
 
         candidate_name = request.form["candidate_name"]
 
-        existing = conn.execute(
-            "SELECT * FROM votes WHERE topic_id=? AND candidate_name=?",
-            (topic_id, candidate_name)
-        ).fetchone()
+        vote_power = voter["voting_power"]
+
+        existing = conn.execute("""
+            SELECT * FROM votes
+            WHERE topic_id=? AND candidate_name=?
+        """, (topic_id, candidate_name)).fetchone()
 
         if existing:
-            conn.execute(
-                "UPDATE votes SET vote_count = vote_count + 1 WHERE topic_id=? AND candidate_name=?",
-                (topic_id, candidate_name)
-            )
-        else:
-            conn.execute(
-                "INSERT INTO votes (topic_id, candidate_name, vote_count) VALUES (?, ?, 1)",
-                (topic_id, candidate_name)
-            )
+            conn.execute("""
+                UPDATE votes
+                SET vote_count = vote_count + ?
+                WHERE topic_id=? AND candidate_name=?
+            """, (vote_power, topic_id, candidate_name))
 
-        conn.execute(
-            "UPDATE voter_usage SET votes_used = votes_used + 1 WHERE topic_id=? AND voter_email=?",
-            (topic_id, email)
-        )
+        else:
+            conn.execute("""
+                INSERT INTO votes
+                (topic_id, candidate_name, vote_count)
+                VALUES (?, ?, ?)
+            """, (topic_id, candidate_name, vote_power))
+
+        conn.execute("""
+            INSERT INTO voter_usage
+            (topic_id, voter_email, has_voted)
+            VALUES (?, ?, 1)
+        """, (topic_id, email))
 
         conn.commit()
         conn.close()
@@ -258,7 +313,7 @@ def vote(topic_id):
         "vote.html",
         topic=topic,
         voter_email=email,
-        remaining_votes=remaining_votes,
+        has_voted=has_voted,
         voting_power=voter["voting_power"],
         candidates=candidates
     )

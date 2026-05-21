@@ -15,7 +15,7 @@ def init_db():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # ================= USERS (VOTERS) =================
+    # ================= VOTERS =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS voters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,6 +36,15 @@ def init_db():
     )
     """)
 
+    # ================= TOPIC VOTERS =================
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS topic_voters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        topic_id INTEGER NOT NULL,
+        voter_email TEXT NOT NULL
+    )
+    """)
+
     # ================= VOTES =================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS votes (
@@ -52,27 +61,25 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         topic_id INTEGER NOT NULL,
         voter_email TEXT NOT NULL,
-        votes_used INTEGER DEFAULT 0
+        has_voted INTEGER DEFAULT 0
     )
     """)
 
     conn.commit()
 
     # ================= DEFAULT USERS =================
-    # IMPORTANT:
-    # password = temporary password (first login)
     voters = [
-    ("Atiqur Rahman", "atiq1512rahman@yahoo.com", 3, "ATQ2026"),
-    ("Mohammad Wasim", "md_wasim03@yahoo.com", 2, "WSM2026"),
-    ("Sazzadul Mitu", "Mitu.rc@gmail.com", 2, "MITU2026"),
-    ("Naihan Ahmed", "naihanahmed@msn.com", 2, "NAIH2026"),
-    ("Robin Kamal", "robinrkamal@gmail.com", 2, "RBK2026"),
-    ("Sohel Solaiman", "sohel.solaiman@gmail.com", 2, "SOHEL2026"),
-    ("Gazi Salah Uddin", "Shumon905@gmail.com", 2, "GAZI2026"),
-    ("Minhaz Chowdhury", "minhazc@gmail.com", 1, "MINHAZ2026"),
-    ("Zahid Islam", "sajib27@yahoo.com", 2, "ZAHID2026"),
-    ("Muhammad M Islam", "fsmi1255@gmail.com", 2, "ISLAM2026")
-]
+        ("Atiqur Rahman", "atiq1512rahman@yahoo.com", 3, "ATQ2026"),
+        ("Mohammad Wasim", "md_wasim03@yahoo.com", 2, "WSM2026"),
+        ("Sazzadul Mitu", "Mitu.rc@gmail.com", 2, "MITU2026"),
+        ("Naihan Ahmed", "naihanahmed@msn.com", 2, "NAIH2026"),
+        ("Robin Kamal", "robinrkamal@gmail.com", 2, "RBK2026"),
+        ("Sohel Solaiman", "sohel.solaiman@gmail.com", 2, "SOHEL2026"),
+        ("Gazi Salah Uddin", "Shumon905@gmail.com", 2, "GAZI2026"),
+        ("Minhaz Chowdhury", "minhazc@gmail.com", 1, "MINHAZ2026"),
+        ("Zahid Islam", "sajib27@yahoo.com", 2, "ZAHID2026"),
+        ("Muhammad M Islam", "fsmi1255@gmail.com", 2, "ISLAM2026")
+    ]
 
     for name, email, power, pwd in voters:
         cursor.execute("""
